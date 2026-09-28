@@ -1,0 +1,60 @@
+import uvm_pkg::*;
+`include "uvm_macros.svh"
+`include "seq_circuit.sv"
+`include "seq_if.sv"
+`include "seq_transaction.sv"
+`include "seq_sequence.sv"
+`include "seq_sequencer.sv"
+`include "seq_driver.sv"
+`include "seq_monitor.sv"
+`include "seq_scoreboard.sv"
+`include "seq_agent.sv"
+`include "seq_env.sv"
+`include "seq_test.sv"
+module top;
+
+bit clk;
+
+always #5 clk=~clk;
+
+seq_if vif(clk);
+
+seq_circuit dut(
+
+.clk(clk),
+.reset(vif.reset),
+.a(vif.a),
+.b(vif.b),
+.c(vif.c),
+
+.Y(vif.Y),
+.W(vif.W)
+
+);
+
+initial
+begin
+
+vif.reset=1;
+
+#20;
+
+vif.reset=0;
+
+end
+
+initial
+begin
+
+uvm_config_db #(virtual seq_if)::set(null,"*","vif",vif);
+
+run_test("seq_test");
+end
+
+initial begin
+$fsdbDumpfile("fa_dump.fsdb");
+$fsdbDumpvars(0,top);
+
+end
+
+endmodule
