@@ -1,0 +1,49 @@
+class seq_monitor extends uvm_monitor;
+
+`uvm_component_utils(seq_monitor)
+
+virtual seq_if vif;
+
+uvm_analysis_port #(seq_transaction) ap;
+
+function new(string name,uvm_component parent);
+
+super.new(name,parent);
+
+ap=new("ap",this);
+
+endfunction
+
+function void build_phase(uvm_phase phase);
+
+uvm_config_db#(virtual seq_if)::get(this,"","vif",vif);
+
+endfunction
+
+task run_phase(uvm_phase phase);
+
+seq_transaction tr;
+
+forever
+begin
+
+@(posedge vif.clk);
+#1
+
+tr=seq_transaction::type_id::create("tr");
+
+tr.a=vif.a;
+tr.b=vif.b;
+tr.c=vif.c;
+tr.reset=vif.reset;
+
+tr.Y=vif.Y;
+tr.W=vif.W;
+
+ap.write(tr);
+
+end
+
+endtask
+
+endclass

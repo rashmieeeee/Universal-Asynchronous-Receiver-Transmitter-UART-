@@ -1,0 +1,174 @@
+`timescale 1ns/1ps
+
+module uart_tb;
+
+    reg        clk;
+    reg        rst_n;
+    reg        tx_start;
+    reg [7:0]  tx_data;
+
+    wire       tx;
+    wire [7:0] rx_data;
+    wire       rx_done;
+    wire       busy;
+
+    //==========================================================
+    // DUT
+    //==========================================================
+
+    uart_top uut (
+        .clk      (clk),
+        .rst_n    (rst_n),
+        .tx_start (tx_start),
+        .tx_data  (tx_data),
+        .tx       (tx),
+        .rx_data  (rx_data),
+        .rx_done  (rx_done),
+        .busy     (busy)
+    );
+
+    //==========================================================
+    // VCD DUMP FILE
+    //==========================================================
+
+    initial
+    begin
+        $dumpfile("uart_tb.vcd");
+        $dumpvars(0, uart_tb);
+    end
+
+    //==========================================================
+    // 50 MHz CLOCK
+    // 20 ns PERIOD
+    //==========================================================
+
+    initial
+    begin
+        clk = 1'b0;
+
+        forever
+            #10 clk = ~clk;
+    end
+
+    //==========================================================
+    // RESET AND INITIALIZATION
+    //==========================================================
+
+    initial
+    begin
+        rst_n    = 1'b0;
+        tx_start = 1'b0;
+        tx_data  = 8'h00;
+
+        #100;
+
+        rst_n = 1'b1;
+    end
+
+    //==========================================================
+    // SEND BYTE TASK
+    //==========================================================
+
+    task send_byte;
+        input [7:0] data;
+
+        begin
+            // Wait until transmitter is idle
+            wait (busy == 1'b0);
+
+            @(posedge clk);
+            tx_data  = data;
+            tx_start = 1'b1;
+
+            @(posedge clk);
+            tx_start = 1'b0;
+
+            // Wait until receiver completes
+            wait (rx_done == 1'b1);
+
+            if (rx_data == data)
+            begin
+                $display(
+                    "PASS: TX = %h | RX = %h | TIME = %0t",
+                    data,
+                    rx_data,
+                    $time
+                );
+            end
+            else
+            begin
+                $display(
+                    "FAIL: TX = %h | RX = %h | TIME = %0t",
+                    data,
+                    rx_data,
+                    $time
+                );
+            end
+        end
+    endtask
+
+    //==========================================================
+    // MAIN TEST
+    //==========================================================
+
+    initial
+    begin
+
+        // Wait until reset is released
+        wait (rst_n == 1'b1);
+
+        #100;
+
+        $display("==============================================");
+        $display("        UART LOOPBACK TEST STARTED           ");
+        $display("==============================================");
+        $display("Clock      = 50 MHz");
+        $display("Baud Rate  = 9600");
+        $display("==============================================");
+
+        // Test pattern 1
+        send_byte(8'hA5);
+
+        // Test pattern 2
+        send_byte(8'h5A);
+
+        // Test pattern 3
+        send_byte(8'h00);
+
+        // Test pattern 4
+        send_byte(8'hFF);
+
+        // Test pattern 5
+        send_byte(8'h3C);
+
+        // Test pattern 6
+        send_byte(8'hC3);
+
+        #100;
+
+        $display("==============================================");
+        $display("        UART LOOPBACK TEST COMPLETED          ");
+        $display("==============================================");
+
+        $finish;
+    end
+
+    //==========================================================
+    // SIMULATION MONITOR
+    //==========================================================
+
+    initial
+    begin
+        $monitor(
+            "TIME=%0t | TX=%b | TX_START=%b | TX_DATA=%h | RX_DATA=%h | RX_DONE=%b | BUSY=%b",
+            $time,
+            tx,
+            tx_start,
+            tx_data,
+            rx_data,
+            rx_done,
+            busy
+        );
+    end
+
+endmodule

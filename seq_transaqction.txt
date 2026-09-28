@@ -1,0 +1,17 @@
+class seq_transaction extends uvm_sequence_item;
+
+rand bit a;
+rand bit b;
+rand bit c;
+bit reset;
+
+bit Y;
+bit W;
+
+`uvm_object_utils(seq_transaction)
+
+function new(string name="seq_transaction");
+super.new(name);
+endfunction
+
+endclass

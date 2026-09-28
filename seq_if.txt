@@ -1,0 +1,12 @@
+interface seq_if(input bit clk);
+
+logic reset;
+
+logic a;
+logic b;
+logic c;
+
+logic Y;
+logic W;
+
+endinterface

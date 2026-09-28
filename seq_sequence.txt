@@ -1,0 +1,28 @@
+class seq_sequence extends uvm_sequence #(seq_transaction);
+
+`uvm_object_utils(seq_sequence)
+
+function new(string name="seq_sequence");
+super.new(name);
+endfunction
+
+task body();
+
+repeat(20)
+begin
+
+seq_transaction tr;
+
+tr = seq_transaction::type_id::create("tr");
+
+start_item(tr);
+
+assert(tr.randomize());
+
+finish_item(tr);
+
+end
+
+endtask
+
+endclass

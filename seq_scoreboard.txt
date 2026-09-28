@@ -1,0 +1,38 @@
+class seq_scoreboard extends uvm_scoreboard;
+
+`uvm_component_utils(seq_scoreboard)
+
+uvm_analysis_imp #(seq_transaction,seq_scoreboard) imp;
+
+function new(string name,uvm_component parent);
+
+super.new(name,parent);
+
+imp=new("imp",this);
+
+endfunction
+
+function void write(seq_transaction tr);
+
+bit expY;
+bit expW;
+
+if (tr.reset)begin
+	expY=0;
+	expW=0;
+end
+else begin
+
+expY = tr.a & tr.b;
+expW = ~tr.c;
+end
+
+if ((tr.Y == expY) && (tr.W == expW)) begin 
+`uvm_info("PASS","MATCH",UVM_LOW)
+
+end
+else begin
+	`uvm_error("FAIL",$sformatf("Expected Y=%0d W=%0d Actual Y=%0d W=%0d",expY,expW,tr.Y,tr.W))
+end
+endfunction
+endclass

@@ -1,0 +1,94 @@
+module uart_transmitter (
+    input        clk,
+    input        rst_n,
+    input        tx_en,
+    input        tx_start,
+    input  [7:0] tx_data,
+
+    output       tx,
+    output       busy
+);
+
+    parameter IDLE_STATE  = 2'b00;
+    parameter START_STATE = 2'b01;
+    parameter DATA_STATE  = 2'b10;
+    parameter STOP_STATE  = 2'b11;
+
+    reg [7:0] data;
+    reg [2:0] index;
+    reg [1:0] state;
+
+    always @(posedge clk or negedge rst_n)
+    begin
+        if (!rst_n)
+        begin
+            tx    <= 1'b1;
+            data  <= 8'b0;
+            index <= 3'b000;
+            state <= IDLE_STATE;
+        end
+        else
+        begin
+            case (state)
+
+                IDLE_STATE:
+                begin
+                    tx <= 1'b1;
+
+                    if (tx_start)
+                    begin
+                        data  <= tx_data;
+                        index <= 3'b000;
+                        state <= START_STATE;
+                    end
+                end
+
+                START_STATE:
+                begin
+                    if (tx_en)
+                    begin
+                        tx    <= 1'b0;
+                        state <= DATA_STATE;
+                    end
+                end
+
+                DATA_STATE:
+                begin
+                    if (tx_en)
+                    begin
+                        tx <= data[index];
+
+                        if (index == 3'd7)
+                        begin
+                            state <= STOP_STATE;
+                        end
+                        else
+                        begin
+                            index <= index + 1'b1;
+                        end
+                    end
+                end
+
+                STOP_STATE:
+                begin
+                    if (tx_en)
+                    begin
+                        tx    <= 1'b1;
+                        state <= IDLE_STATE;
+                    end
+                end
+
+                default:
+                begin
+                    tx    <= 1'b1;
+                    index <= 3'd0;
+                    state <= IDLE_STATE;
+                end
+
+            endcase
+        end
+    end
+
+    assign busy = (state != IDLE_STATE);
+
+endmodule

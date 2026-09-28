@@ -1,0 +1,42 @@
+class seq_driver extends uvm_driver #(seq_transaction);
+
+`uvm_component_utils(seq_driver)
+
+virtual seq_if vif;
+
+function new(string name,uvm_component parent);
+
+super.new(name,parent);
+
+endfunction
+
+function void build_phase(uvm_phase phase);
+
+super.build_phase(phase);
+
+uvm_config_db#(virtual seq_if)::get(this,"","vif",vif);
+
+endfunction
+
+task run_phase(uvm_phase phase);
+
+seq_transaction tr;
+
+forever
+begin
+
+seq_item_port.get_next_item(tr);
+
+@(negedge vif.clk);
+
+vif.a <= tr.a;
+vif.b <= tr.b;
+vif.c <= tr.c;
+
+seq_item_port.item_done();
+
+end
+
+endtask
+
+endclass
